@@ -1,0 +1,102 @@
+.task-app {
+  width: min(100% - 32px, 620px);
+  margin: 64px auto;
+  text-align: left;
+}
+
+.task-app h1 {
+  margin: 0 0 28px;
+  font-size: clamp(2rem, 6vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+.task-form {
+  display: flex;
+  gap: 10px;
+}
+
+.task-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-h);
+  background: var(--bg);
+  font: inherit;
+}
+
+.task-form button,
+.toggle-task {
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.task-form button {
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+.task-list {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-h);
+}
+
+.task-item.is-completed span {
+  color: var(--text);
+  text-decoration: line-through;
+}
+
+.toggle-task {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  font-size: 0.85rem;
+}
+
+.task-count,
+.empty-state {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 480px) {
+  .task-app {
+    margin-top: 36px;
+  }
+
+  .task-form {
+    flex-direction: column;
+  }
+
+  .task-form button {
+    min-height: 44px;
+  }
+}
