@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { isValidDate } from "../utils/dates";
 
 const PRIORITIES = ["Low", "Medium", "High"];
 
 export default function TaskForm({ onAdd }) {
   const [input, setInput] = useState("");
   const [priority, setPriority] = useState("Medium");
+  const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
 
   function handleSubmit(event) {
@@ -16,9 +18,15 @@ export default function TaskForm({ onAdd }) {
       return;
     }
 
-    onAdd({ title, priority });
+    if (!isValidDate(dueDate)) {
+      setError("Invalid date. Please choose a real date.");
+      return;
+    }
+
+    onAdd({ title, priority, dueDate });
     setInput("");
     setPriority("Medium");
+    setDueDate("");
     setError("");
   }
 
@@ -41,6 +49,14 @@ export default function TaskForm({ onAdd }) {
             </option>
           ))}
         </select>
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => {
+            setDueDate(e.target.value);
+            if (error) setError("");
+          }}
+        />
         <button type="submit">Add Task</button>
       </form>
       {error && (

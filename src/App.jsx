@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import TaskItem from "./Components/TaskItem";
 import TaskForm from "./Components/TaskForm";
+import { isValidDate } from "./utils/dates";
 import "./App.css";
 
 const STORAGE_KEY = "task-list-v1";
@@ -13,18 +14,24 @@ const initialTasks = [
     title: "Learn React",
     completed: false,
     priority: "Medium",
+    dueDate: "",
+    createdAt: 1,
   },
   {
     id: "initial-2",
-    title: "Practice JavaScript",
+    title: "Learn React",
     completed: false,
     priority: "Medium",
+    dueDate: "",
+    createdAt: 2,
   },
   {
     id: "initial-3",
-    title: "Build a Project",
+    title: "Learn React",
     completed: false,
-    priority: "High",
+    priority: "Medium",
+    dueDate: "",
+    createdAt: 3,
   },
 ];
 
@@ -34,7 +41,6 @@ function createId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-// Reads saved tasks. Anything invalid is dropped; a broken save never crashes the app.
 function loadTasks() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -57,6 +63,12 @@ function loadTasks() {
         title: task.title.trim(),
         completed: task.completed,
         priority: PRIORITIES.includes(task.priority) ? task.priority : "Medium",
+        dueDate:
+          typeof task.dueDate === "string" && isValidDate(task.dueDate)
+            ? task.dueDate
+            : "",
+        createdAt:
+          typeof task.createdAt === "number" ? task.createdAt : Date.now(),
       }));
   } catch {
     return initialTasks;
@@ -77,12 +89,14 @@ function App() {
     }
   }, [tasks]);
 
-  function addTask({ title, priority }) {
+  function addTask({ title, priority, dueDate }) {
     const newTask = {
       id: createId(),
       title,
       completed: false,
       priority,
+      dueDate,
+      createdAt: Date.now(),
     };
 
     setTasks((currentTasks) => [...currentTasks, newTask]);
@@ -101,14 +115,20 @@ function App() {
     if (editingId === id) setEditingId(null);
   }
 
-  function saveTask(id, title, newPriority) {
+  function saveTask(id, title, newPriority, newDueDate) {
     const trimmed = title.trim();
-    if (!trimmed) return false; // TaskItem shows the error and stays in edit mode
+    if (!trimmed) return false;
+    if (!isValidDate(newDueDate)) return false;
 
     setTasks((currentTasks) =>
       currentTasks.map((task) =>
         task.id === id
-          ? { ...task, title: trimmed, priority: newPriority }
+          ? {
+              ...task,
+              title: trimmed,
+              priority: newPriority,
+              dueDate: newDueDate,
+            }
           : task,
       ),
     );
@@ -126,7 +146,6 @@ function App() {
     setEditingId(null);
   }
 
-  // Everything below is derived from `tasks`; no duplicate copies in state.
   const total = tasks.length;
   const completedCount = tasks.filter((task) => task.completed).length;
   const activeCount = total - completedCount;

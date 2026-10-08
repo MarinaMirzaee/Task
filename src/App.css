@@ -36,6 +36,7 @@ body {
 /* inputs and buttons */
 input[type='text'],
 input[type='search'],
+input[type='date'], /* NEW: date input looks like the others */
 select {
   padding: 10px;
   font-size: 15px;
@@ -46,6 +47,7 @@ select {
 
 input[type='text']:focus,
 input[type='search']:focus,
+input[type='date']:focus, /* NEW */
 select:focus {
   outline: none;
   border-color: #3b82f6;
@@ -200,6 +202,17 @@ button:disabled {
 .priority-high {
   background-color: #fadbd8;
   color: #c0392b;
+}
+
+/* NEW: due date and overdue label */
+.due-date {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.overdue {
+  color: #c62828;
+  font-weight: 600;
 }
 
 /* empty state and counts */
