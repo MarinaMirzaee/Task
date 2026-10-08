@@ -1,16 +1,16 @@
-# React + Vite
+# Task Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Where is my state and why?
 
-Currently, two official plugins are available:
+- `tasks` is in App, because the form, list, counter and filters all need it.
+- (write the rest in your own words)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Help and sources I used
 
-## React Compiler
+- React docs (react.dev), MDN
+- Claude (AI): used for explanations and help writing some parts Since I’m still learning React at a beginner level and I haven’t learned the advanced concepts yet, I sometimes use AI when I get stuck on certain parts of my project. I don’t just copy the code; I try to understand the solution and learn why it works. I see AI as a learning tool that helps me understand concepts that I haven’t learned yet.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## What I did in each step
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Step 1: Split the form into TaskForm.
+- Step 2: Added `dueDate` and `createdAt` to each task. Overdue shows when the date is past and the task is not done. `loadTasks` fixes bad saved dates.
