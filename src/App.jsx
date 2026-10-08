@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import TaskItem from "./Components/TaskItem";
+import TaskList from "./Components/TaskList";
 import TaskForm from "./Components/TaskForm";
 import { isValidDate } from "./utils/dates";
 import useLocalStorage from "./hooks/useLocalStorage";
@@ -255,22 +255,16 @@ function App() {
       ) : visibleTasks.length === 0 ? (
         <p className="empty-state">No matching tasks.</p>
       ) : (
-        <ul className="task-list">
-          {sortedTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              priorities={PRIORITIES}
-              isEditing={editingId === task.id}
-              editLocked={editingId !== null && editingId !== task.id}
-              onToggle={toggleTask}
-              onDelete={deleteTask}
-              onStartEdit={setEditingId}
-              onSave={saveTask}
-              onCancel={() => setEditingId(null)}
-            />
-          ))}
-        </ul>
+        <TaskList
+          tasks={sortedTasks}
+          priorities={PRIORITIES}
+          editingId={editingId}
+          onToggle={toggleTask}
+          onDelete={deleteTask}
+          onStartEdit={setEditingId}
+          onSave={saveTask}
+          onCancel={() => setEditingId(null)}
+        />
       )}
 
       {lastDeleted && (
@@ -288,5 +282,4 @@ function App() {
     </main>
   );
 }
-
 export default App;
