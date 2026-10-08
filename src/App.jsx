@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TaskItem from "./Components/TaskItem";
 import TaskForm from "./Components/TaskForm";
 import { isValidDate } from "./utils/dates";
@@ -81,6 +81,13 @@ function App() {
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Newest");
   const [editingId, setEditingId] = useState(null);
+  const [lastDeleted, setLastDeleted] = useState(null);
+
+  useEffect(() => {
+    if (!lastDeleted) return;
+    const timerId = setTimeout(() => setLastDeleted(null), 5000);
+    return () => clearTimeout(timerId);
+  }, [lastDeleted]);
 
   function addTask({ title, priority, dueDate }) {
     const newTask = {
@@ -104,8 +111,24 @@ function App() {
   }
 
   function deleteTask(id) {
+    const index = tasks.findIndex((task) => task.id === id);
+    if (index === -1) return;
+
+    setLastDeleted({ task: tasks[index], index });
     setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
     if (editingId === id) setEditingId(null);
+  }
+
+  function undoDelete() {
+    if (!lastDeleted) return;
+    const { task, index } = lastDeleted;
+
+    setTasks((currentTasks) => [
+      ...currentTasks.slice(0, index),
+      task,
+      ...currentTasks.slice(index),
+    ]);
+    setLastDeleted(null);
   }
 
   function saveTask(id, title, newPriority, newDueDate) {
@@ -248,6 +271,15 @@ function App() {
             />
           ))}
         </ul>
+      )}
+
+      {lastDeleted && (
+        <div className="undo-bar" role="status">
+          <span>Deleted – "{lastDeleted.task.title}"</span>
+          <button type="button" onClick={undoDelete}>
+            Undo
+          </button>
+        </div>
       )}
 
       <p className="task-count" aria-live="polite">
