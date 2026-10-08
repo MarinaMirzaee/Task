@@ -7,6 +7,8 @@ import "./App.css";
 const STORAGE_KEY = "task-list-v1";
 const PRIORITIES = ["Low", "Medium", "High"];
 const FILTERS = ["All", "Active", "Completed"];
+const PRIORITY_FILTERS = ["All", ...PRIORITIES];
+const SORT_OPTIONS = ["Newest", "Oldest", "Due Date"];
 
 const initialTasks = [
   {
@@ -19,7 +21,7 @@ const initialTasks = [
   },
   {
     id: "initial-2",
-    title: "Learn React",
+    title: "Practice JavaScript",
     completed: false,
     priority: "Medium",
     dueDate: "",
@@ -27,9 +29,9 @@ const initialTasks = [
   },
   {
     id: "initial-3",
-    title: "Learn React",
+    title: "Build a Project",
     completed: false,
-    priority: "Medium",
+    priority: "High",
     dueDate: "",
     createdAt: 3,
   },
@@ -79,13 +81,15 @@ function App() {
   const [tasks, setTasks] = useState(loadTasks);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("Newest");
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
     } catch {
-      // Storage may be full or blocked; the app keeps working in memory.
+      return;
     }
   }, [tasks]);
 
@@ -157,7 +161,19 @@ function App() {
       filter === "All" ||
       (filter === "Active" && !task.completed) ||
       (filter === "Completed" && task.completed);
-    return matchesSearch && matchesFilter;
+    const matchesPriority =
+      priorityFilter === "All" || task.priority === priorityFilter;
+    return matchesSearch && matchesFilter && matchesPriority;
+  });
+
+  const sortedTasks = [...visibleTasks].sort((a, b) => {
+    if (sortBy === "Newest") return b.createdAt - a.createdAt;
+    if (sortBy === "Oldest") return a.createdAt - b.createdAt;
+
+    if (!a.dueDate && !b.dueDate) return 0;
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    return a.dueDate.localeCompare(b.dueDate);
   });
 
   return (
@@ -190,6 +206,36 @@ function App() {
             </button>
           ))}
         </div>
+
+        <select
+          aria-label="Filter by priority"
+          value={priorityFilter}
+          onChange={(event) => {
+            setPriorityFilter(event.target.value);
+            setEditingId(null);
+          }}
+        >
+          {PRIORITY_FILTERS.map((p) => (
+            <option key={p} value={p}>
+              {p === "All" ? "All priorities" : p}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Sort tasks"
+          value={sortBy}
+          onChange={(event) => {
+            setSortBy(event.target.value);
+            setEditingId(null);
+          }}
+        >
+          {SORT_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              Sort: {option}
+            </option>
+          ))}
+        </select>
       </div>
 
       {total === 0 ? (
@@ -198,7 +244,7 @@ function App() {
         <p className="empty-state">No matching tasks.</p>
       ) : (
         <ul className="task-list">
-          {visibleTasks.map((task) => (
+          {sortedTasks.map((task) => (
             <TaskItem
               key={task.id}
               task={task}
