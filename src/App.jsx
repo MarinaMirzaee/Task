@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TaskItem from "./Components/TaskItem";
 import TaskForm from "./Components/TaskForm";
 import { isValidDate } from "./utils/dates";
+import useLocalStorage from "./hooks/useLocalStorage";
 import "./App.css";
 
 const STORAGE_KEY = "task-list-v1";
@@ -43,55 +44,43 @@ function createId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function loadTasks() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === null) return initialTasks;
+function sanitizeTasks(parsed, fallback) {
+  if (!Array.isArray(parsed)) return fallback;
 
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return initialTasks;
-
-    return parsed
-      .filter(
-        (task) =>
-          task &&
-          (typeof task.id === "string" || typeof task.id === "number") &&
-          typeof task.title === "string" &&
-          task.title.trim() !== "" &&
-          typeof task.completed === "boolean",
-      )
-      .map((task) => ({
-        id: task.id,
-        title: task.title.trim(),
-        completed: task.completed,
-        priority: PRIORITIES.includes(task.priority) ? task.priority : "Medium",
-        dueDate:
-          typeof task.dueDate === "string" && isValidDate(task.dueDate)
-            ? task.dueDate
-            : "",
-        createdAt:
-          typeof task.createdAt === "number" ? task.createdAt : Date.now(),
-      }));
-  } catch {
-    return initialTasks;
-  }
+  return parsed
+    .filter(
+      (task) =>
+        task &&
+        (typeof task.id === "string" || typeof task.id === "number") &&
+        typeof task.title === "string" &&
+        task.title.trim() !== "" &&
+        typeof task.completed === "boolean",
+    )
+    .map((task) => ({
+      id: task.id,
+      title: task.title.trim(),
+      completed: task.completed,
+      priority: PRIORITIES.includes(task.priority) ? task.priority : "Medium",
+      dueDate:
+        typeof task.dueDate === "string" && isValidDate(task.dueDate)
+          ? task.dueDate
+          : "",
+      createdAt:
+        typeof task.createdAt === "number" ? task.createdAt : Date.now(),
+    }));
 }
 
 function App() {
-  const [tasks, setTasks] = useState(loadTasks);
+  const [tasks, setTasks] = useLocalStorage(
+    STORAGE_KEY,
+    initialTasks,
+    sanitizeTasks,
+  );
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Newest");
   const [editingId, setEditingId] = useState(null);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    } catch {
-      return;
-    }
-  }, [tasks]);
 
   function addTask({ title, priority, dueDate }) {
     const newTask = {
