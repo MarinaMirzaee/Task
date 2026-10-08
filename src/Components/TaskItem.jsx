@@ -1,16 +1,24 @@
-import { useState } from 'react'
+import { useState } from "react";
+import { isValidDate, isOverdue } from "../utils/dates";
+
 function EditForm({ task, priorities, onSave, onCancel }) {
-  const [title, setTitle] = useState(task.title)
-  const [priority, setPriority] = useState(task.priority)
-  const [error, setError] = useState('')
+  const [title, setTitle] = useState(task.title);
+  const [priority, setPriority] = useState(task.priority);
+  const [dueDate, setDueDate] = useState(task.dueDate || "");
+  const [error, setError] = useState("");
 
   function handleSubmit(event) {
-    event.preventDefault()
+    event.preventDefault();
     if (!title.trim()) {
-      setError('Task title cannot be empty.')
-      return
+      setError("Task title cannot be empty.");
+      return;
     }
-    onSave(task.id, title, priority)
+
+    if (!isValidDate(dueDate)) {
+      setError("Invalid date. Please choose a real date.");
+      return;
+    }
+    onSave(task.id, title, priority, dueDate);
   }
 
   return (
@@ -24,11 +32,11 @@ function EditForm({ task, priorities, onSave, onCancel }) {
         value={title}
         autoFocus
         onChange={(event) => {
-          setTitle(event.target.value)
-          if (error) setError('')
+          setTitle(event.target.value);
+          if (error) setError("");
         }}
         onKeyDown={(event) => {
-          if (event.key === 'Escape') onCancel()
+          if (event.key === "Escape") onCancel();
         }}
         aria-invalid={Boolean(error)}
       />
@@ -46,6 +54,18 @@ function EditForm({ task, priorities, onSave, onCancel }) {
           </option>
         ))}
       </select>
+
+      {/* NEW: input date */}
+
+      <input
+        type="date"
+        value={dueDate}
+        onChange={(event) => {
+          setDueDate(event.target.value);
+          if (error) setError("");
+        }}
+        aria-label="Edit due date"
+      />
       <button type="submit">Save</button>
       <button type="button" onClick={onCancel}>
         Cancel
@@ -56,7 +76,7 @@ function EditForm({ task, priorities, onSave, onCancel }) {
         </p>
       )}
     </form>
-  )
+  );
 }
 
 export default function TaskItem({
@@ -80,23 +100,30 @@ export default function TaskItem({
           onCancel={onCancel}
         />
       </li>
-    )
+    );
   }
 
   return (
-    <li className={`task-item${task.completed ? ' is-completed' : ''}`}>
+    <li className={`task-item${task.completed ? " is-completed" : ""}`}>
       <span className="task-title">{task.title}</span>
-      <span className={`priority-badge priority-${task.priority.toLowerCase()}`}>
+      <span
+        className={`priority-badge priority-${task.priority.toLowerCase()}`}
+      >
         {task.priority}
       </span>
+
+      {/* NEW: Date and Overdue */}
+
+      {task.dueDate && <span className="due-date">Due: {task.dueDate}</span>}
+      {isOverdue(task) && <span className="overdue">Overdue</span>}
       <button
         type="button"
         className="toggle-task"
         onClick={() => onToggle(task.id)}
         aria-pressed={task.completed}
-        aria-label={`${task.completed ? 'Mark as incomplete' : 'Mark as complete'}: ${task.title}`}
+        aria-label={`${task.completed ? "Mark as incomplete" : "Mark as complete"}: ${task.title}`}
       >
-        {task.completed ? 'Undo' : 'Complete'}
+        {task.completed ? "Undo" : "Complete"}
       </button>
       <button
         type="button"
@@ -114,5 +141,5 @@ export default function TaskItem({
         Delete
       </button>
     </li>
-  )
+  );
 }
