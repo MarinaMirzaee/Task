@@ -1,31 +1,28 @@
 import { useState } from "react";
-import { isValidDate } from "../utils/dates";
-
-const PRIORITIES = ["Low", "Medium", "High"];
+import {
+  ERRORS,
+  PRIORITIES,
+  DEFAULT_PRIORITY,
+  MAX_TITLE_LENGTH,
+} from "../Constants";
 
 export default function TaskForm({ onAdd }) {
   const [input, setInput] = useState("");
-  const [priority, setPriority] = useState("Medium");
+  const [priority, setPriority] = useState(DEFAULT_PRIORITY);
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
-    const title = input.trim();
 
-    if (!title) {
-      setError("Task title cannot be empty.");
+    const result = onAdd({ title: input, priority, dueDate });
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
 
-    if (!isValidDate(dueDate)) {
-      setError("Invalid date. Please choose a real date.");
-      return;
-    }
-
-    onAdd({ title, priority, dueDate });
     setInput("");
-    setPriority("Medium");
+    setPriority(DEFAULT_PRIORITY);
     setDueDate("");
     setError("");
   }
@@ -36,13 +33,28 @@ export default function TaskForm({ onAdd }) {
         <input
           type="text"
           value={input}
+          required
+          maxLength={MAX_TITLE_LENGTH}
           onChange={(e) => {
             setInput(e.target.value);
             if (error) setError("");
           }}
           placeholder="What needs to be done?"
+          aria-label="Task title"
+          aria-invalid={
+            error === ERRORS.TITLE_REQUIRED || error === ERRORS.TITLE_TOO_LONG
+          }
         />
-        <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+        <select
+          value={priority}
+          onChange={(e) => {
+            setPriority(e.target.value);
+            if (error) setError("");
+          }}
+          required
+          aria-invalid={error === ERRORS.PRIORITY_INVALID}
+          aria-label="Priority"
+        >
           {PRIORITIES.map((p) => (
             <option key={p} value={p}>
               {p}
@@ -52,10 +64,15 @@ export default function TaskForm({ onAdd }) {
         <input
           type="date"
           value={dueDate}
+          required
           onChange={(e) => {
             setDueDate(e.target.value);
             if (error) setError("");
           }}
+          aria-label="Due date"
+          aria-invalid={
+            error === ERRORS.DATE_REQUIRED || error === ERRORS.DATE_INVALID
+          }
         />
         <button type="submit">Add Task</button>
       </form>

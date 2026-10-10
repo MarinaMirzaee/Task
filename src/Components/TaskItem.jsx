@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { isValidDate, isOverdue } from "../utils/dates";
+import { ERRORS, MAX_TITLE_LENGTH } from "../Constants";
+import { isOverdue } from "../utils/dates";
 
 function EditForm({ task, priorities, onSave, onCancel }) {
   const [title, setTitle] = useState(task.title);
@@ -9,16 +10,12 @@ function EditForm({ task, priorities, onSave, onCancel }) {
 
   function handleSubmit(event) {
     event.preventDefault();
-    if (!title.trim()) {
-      setError("Task title cannot be empty.");
+    const result = onSave(task.id, { title, priority, dueDate });
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
-
-    if (!isValidDate(dueDate)) {
-      setError("Invalid date. Please choose a real date.");
-      return;
-    }
-    onSave(task.id, title, priority, dueDate);
+    setError("");
   }
 
   return (
@@ -30,6 +27,8 @@ function EditForm({ task, priorities, onSave, onCancel }) {
         id={`edit-title-${task.id}`}
         type="text"
         value={title}
+        maxLength={MAX_TITLE_LENGTH}
+        required
         autoFocus
         onChange={(event) => {
           setTitle(event.target.value);
@@ -38,7 +37,9 @@ function EditForm({ task, priorities, onSave, onCancel }) {
         onKeyDown={(event) => {
           if (event.key === "Escape") onCancel();
         }}
-        aria-invalid={Boolean(error)}
+        aria-invalid={
+          error === ERRORS.TITLE_REQUIRED || error === ERRORS.TITLE_TOO_LONG
+        }
       />
       <label className="visually-hidden" htmlFor={`edit-priority-${task.id}`}>
         Edit priority
@@ -46,7 +47,12 @@ function EditForm({ task, priorities, onSave, onCancel }) {
       <select
         id={`edit-priority-${task.id}`}
         value={priority}
-        onChange={(event) => setPriority(event.target.value)}
+        required
+        onChange={(event) => {
+          setPriority(event.target.value);
+          if (error) setError("");
+        }}
+        aria-invalid={error === ERRORS.PRIORITY_INVALID}
       >
         {priorities.map((p) => (
           <option key={p} value={p}>
@@ -55,15 +61,17 @@ function EditForm({ task, priorities, onSave, onCancel }) {
         ))}
       </select>
 
-      {/* NEW: input date */}
-
       <input
         type="date"
         value={dueDate}
+        required
         onChange={(event) => {
           setDueDate(event.target.value);
           if (error) setError("");
         }}
+        aria-invalid={
+          error === ERRORS.DATE_REQUIRED || error === ERRORS.DATE_INVALID
+        }
         aria-label="Edit due date"
       />
       <button type="submit">Save</button>

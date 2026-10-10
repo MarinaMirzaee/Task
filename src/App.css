@@ -65,7 +65,9 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
 }
 
-input[aria-invalid='true'] {
+/* CHANGED: select added */
+input[aria-invalid='true'],
+select[aria-invalid='true'] {
   border-color: #e74c3c;
 }
 
@@ -79,8 +81,15 @@ button {
   cursor: pointer;
 }
 
-button:hover {
+/* CHANGED: no hover effect on disabled buttons */
+button:hover:not(:disabled) {
   background-color: var(--aquamarine-soft);
+}
+
+/* NEW: keyboard focus */
+button:focus-visible {
+  outline: 2px solid var(--aqua);
+  outline-offset: 2px;
 }
 
 button:disabled {
@@ -97,6 +106,12 @@ button:disabled {
 .task-form input[type='text'] {
   flex: 1;
   min-width: 180px;
+}
+
+/* NEW: select and date wrap nicely on narrow screens */
+.task-form select,
+.task-form input[type='date'] {
+  flex: 1 1 140px;
 }
 
 .task-form button[type='submit'],
@@ -132,6 +147,7 @@ button:disabled {
 
 .filter-group {
   display: flex;
+  flex-wrap: wrap; /* NEW */
   gap: 5px;
 }
 
@@ -162,6 +178,13 @@ button:disabled {
 .task-title {
   flex: 1;
   min-width: 120px;
+}
+
+/* NEW: long titles without spaces no longer overflow */
+.task-title,
+.undo-bar span {
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .task-item.is-completed .task-title {
