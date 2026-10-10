@@ -1,155 +1,41 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TaskList from "./Components/TaskList";
 import TaskForm from "./Components/TaskForm";
-import { isValidDate } from "./utils/dates";
-import useLocalStorage from "./hooks/useLocalStorage";
+import useTasks from "./hooks/useTasks";
+import {
+  PRIORITIES,
+  FILTERS,
+  PRIORITY_FILTERS,
+  SORT_OPTIONS,
+} from "./Constants";
 import "./App.css";
 
-const STORAGE_KEY = "task-list-v1";
-const PRIORITIES = ["Low", "Medium", "High"];
-const FILTERS = ["All", "Active", "Completed"];
-const PRIORITY_FILTERS = ["All", ...PRIORITIES];
-const SORT_OPTIONS = ["Newest", "Oldest", "Due Date"];
-
-const initialTasks = [
-  {
-    id: "initial-1",
-    title: "Learn React",
-    completed: false,
-    priority: "Medium",
-    dueDate: "",
-    createdAt: 1,
-  },
-  {
-    id: "initial-2",
-    title: "Practice JavaScript",
-    completed: false,
-    priority: "Medium",
-    dueDate: "",
-    createdAt: 2,
-  },
-  {
-    id: "initial-3",
-    title: "Build a Project",
-    completed: false,
-    priority: "High",
-    dueDate: "",
-    createdAt: 3,
-  },
-];
-
-function createId() {
-  return typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function sanitizeTasks(parsed, fallback) {
-  if (!Array.isArray(parsed)) return fallback;
-
-  return parsed
-    .filter(
-      (task) =>
-        task &&
-        (typeof task.id === "string" || typeof task.id === "number") &&
-        typeof task.title === "string" &&
-        task.title.trim() !== "" &&
-        typeof task.completed === "boolean",
-    )
-    .map((task) => ({
-      id: task.id,
-      title: task.title.trim(),
-      completed: task.completed,
-      priority: PRIORITIES.includes(task.priority) ? task.priority : "Medium",
-      dueDate:
-        typeof task.dueDate === "string" && isValidDate(task.dueDate)
-          ? task.dueDate
-          : "",
-      createdAt:
-        typeof task.createdAt === "number" ? task.createdAt : Date.now(),
-    }));
-}
-
 function App() {
-  const [tasks, setTasks] = useLocalStorage(
-    STORAGE_KEY,
-    initialTasks,
-    sanitizeTasks,
-  );
+  const {
+    tasks,
+    lastDeleted,
+    addTask,
+    saveTask,
+    toggleTask,
+    deleteTask,
+    undoDelete,
+  } = useTasks();
+
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Newest");
   const [editingId, setEditingId] = useState(null);
-  const [lastDeleted, setLastDeleted] = useState(null);
 
-  useEffect(() => {
-    if (!lastDeleted) return;
-    const timerId = setTimeout(() => setLastDeleted(null), 5000);
-    return () => clearTimeout(timerId);
-  }, [lastDeleted]);
-
-  function addTask({ title, priority, dueDate }) {
-    const newTask = {
-      id: createId(),
-      title,
-      completed: false,
-      priority,
-      dueDate,
-      createdAt: Date.now(),
-    };
-
-    setTasks((currentTasks) => [...currentTasks, newTask]);
+  function handleSave(id, data) {
+    const result = saveTask(id, data);
+    if (result.ok) setEditingId(null);
+    return result;
   }
 
-  function toggleTask(id) {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task,
-      ),
-    );
-  }
-
-  function deleteTask(id) {
-    const index = tasks.findIndex((task) => task.id === id);
-    if (index === -1) return;
-
-    setLastDeleted({ task: tasks[index], index });
-    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
+  function handleDelete(id) {
+    deleteTask(id);
     if (editingId === id) setEditingId(null);
-  }
-
-  function undoDelete() {
-    if (!lastDeleted) return;
-    const { task, index } = lastDeleted;
-
-    setTasks((currentTasks) => [
-      ...currentTasks.slice(0, index),
-      task,
-      ...currentTasks.slice(index),
-    ]);
-    setLastDeleted(null);
-  }
-
-  function saveTask(id, title, newPriority, newDueDate) {
-    const trimmed = title.trim();
-    if (!trimmed) return false;
-    if (!isValidDate(newDueDate)) return false;
-
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              title: trimmed,
-              priority: newPriority,
-              dueDate: newDueDate,
-            }
-          : task,
-      ),
-    );
-    setEditingId(null);
-    return true;
   }
 
   function changeSearch(value) {
@@ -205,6 +91,7 @@ function App() {
           onChange={(event) => changeSearch(event.target.value)}
           placeholder="Search tasks"
         />
+
         <div className="filter-group" role="group" aria-label="Filter tasks">
           {FILTERS.map((name) => (
             <button
@@ -227,9 +114,9 @@ function App() {
             setEditingId(null);
           }}
         >
-          {PRIORITY_FILTERS.map((p) => (
-            <option key={p} value={p}>
-              {p === "All" ? "All priorities" : p}
+          {PRIORITY_FILTERS.map((priority) => (
+            <option key={priority} value={priority}>
+              {priority === "All" ? "All priorities" : priority}
             </option>
           ))}
         </select>
@@ -244,42 +131,44 @@ function App() {
         >
           {SORT_OPTIONS.map((option) => (
             <option key={option} value={option}>
-              Sort: {option}
+              {option}
             </option>
           ))}
         </select>
       </div>
 
-      {total === 0 ? (
-        <p className="empty-state">No tasks yet. Add one above.</p>
-      ) : visibleTasks.length === 0 ? (
-        <p className="empty-state">No matching tasks.</p>
-      ) : (
-        <TaskList
-          tasks={sortedTasks}
-          priorities={PRIORITIES}
-          editingId={editingId}
-          onToggle={toggleTask}
-          onDelete={deleteTask}
-          onStartEdit={setEditingId}
-          onSave={saveTask}
-          onCancel={() => setEditingId(null)}
-        />
-      )}
-
       {lastDeleted && (
         <div className="undo-bar" role="status">
-          <span>Deleted – "{lastDeleted.task.title}"</span>
+          <span>Task deleted.</span>
           <button type="button" onClick={undoDelete}>
             Undo
           </button>
         </div>
       )}
 
-      <p className="task-count" aria-live="polite">
-        Total: {total} · Active: {activeCount} · Completed: {completedCount}
+      {sortedTasks.length > 0 ? (
+        <TaskList
+          tasks={sortedTasks}
+          priorities={PRIORITIES}
+          editingId={editingId}
+          onToggle={toggleTask}
+          onDelete={handleDelete}
+          onStartEdit={setEditingId}
+          onSave={handleSave}
+          onCancel={() => setEditingId(null)}
+        />
+      ) : (
+        <p className="empty-state">
+          {total === 0 ? "No tasks yet. Add one above." : "No matching tasks."}
+        </p>
+      )}
+
+      <p className="task-count">
+        {total} {total === 1 ? "task" : "tasks"} · {activeCount} active ·{" "}
+        {completedCount} completed
       </p>
     </main>
   );
 }
+
 export default App;
